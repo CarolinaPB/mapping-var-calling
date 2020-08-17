@@ -1,0 +1,12 @@
+short:
+  forward: 
+    SG_data/DTG-SG-188_R1_001.fastq.gz
+  reverse: 
+    SG_data/DTG-SG-188_R2_001.fastq.gz
+
+
+assembly: 
+  HiC_assembly/Mgal6.fa
+
+DATADIR:
+  /lustre/backup/WUR/ABGC/shared/ABGC_Projects/Turkey_Assembly/
