@@ -2,4 +2,6 @@ channels:
   - bioconda
 dependencies:
   - samblaster
-  - qualimap
+  - bwa=0.7.17
+  - samtools=1.9
+
