@@ -3,14 +3,14 @@ import os
 
 
 # Resources that can be set individually in each rule:
-    # time_min=XXX (default 180)
-    # cpus=XXX (default 16)
-    # mem_mb=XXX (default 16000)
+    # Resources:
+        # time_min=XXX (default 180)
+        # cpus=XXX (default 16)
+        # mem_mb=XXX (default 16000)
 
 rule all:
     input:
-        # "qualimap_report/report.pdf",
-        #  os.path.join("mapped_reads/", config["BAM_prefix"]+".bam")
+        "qualimap_report/report.pdf",
         "variant_calling/var.vcf.gz"
 
 rule bwa_index:
@@ -21,8 +21,6 @@ rule bwa_index:
         "checks/bwa_index.txt"
     message:
         "Rule {rule} processing"
-    # conda:
-    #     "envs/bwa.yaml"
     shell:
         "scripts/bwa_index_check.sh {input} > {output}"
 
@@ -38,11 +36,6 @@ rule bwa_map:
     resources: 
         cpus=16,
         mem_mb=16000
-    # conda:
-    #     "envs/bwa.yaml"
-    # envmodules:
-    #     "bwa/gcc/64/0.7.17", 
-    #     "samtools/gcc/64/1.9"
     message:
         "Rule {rule} processing"
     shell:
@@ -59,8 +52,6 @@ rule samtools_fixmate:
         "samtools/gcc/64/1.9"
     message:
         "Rule {rule} processing"
-    # conda:
-    #     "envs/bwa.yaml"  
     shell: 
         "module load samtools && samtools fixmate {input} {output}"
 
@@ -70,8 +61,6 @@ rule samtools_sort:
         os.path.join("fixmate/", config["BAM_prefix"] +".fixmate.bam")
     output: 
         os.path.join("sorted_reads/", config["BAM_prefix"] +".fixmate.sort.bam")
-    # conda:
-    #     "envs/bwa.yaml"
     envmodules:
         "samtools/gcc/64/1.9"
     message:
@@ -85,10 +74,6 @@ rule samtools_index:
     output:
         "checks/samtools_index.txt", 
         os.path.join("sorted_reads/", config["BAM_prefix"] +".fixmate.sort.bam.bai")
-    # conda:
-    #     "envs/bwa.yaml"
-    # envmodules:
-    #     "samtools/gcc/64/1.9"
     message:
         "Rule {rule} processing"
     shell:
@@ -96,8 +81,8 @@ rule samtools_index:
 
 rule qualimap_report:
     input: 
-        "checks/samtools_index.txt",
-        os.path.join("sorted_reads/", config["BAM_prefix"] +".fixmate.sort.bam")
+        check="checks/samtools_index.txt",
+        bam=os.path.join("sorted_reads/", config["BAM_prefix"] +".fixmate.sort.bam")
     output: 
         "qualimap_report/report.pdf"
     conda:
@@ -105,7 +90,7 @@ rule qualimap_report:
     message:
         "Rule {rule} processing"
     shell: 
-        "unset DISPLAY && qualimap bamqc -bam {input} --java-mem-size=5G -nt 1 -outfile {output}"
+        "unset DISPLAY && qualimap bamqc -bam {input.bam} --java-mem-size=5G -nt 1 -outfile {output}"
 
 
 rule freebayes_var:
@@ -115,8 +100,6 @@ rule freebayes_var:
         bam_bai = os.path.join("sorted_reads/", config["BAM_prefix"] +".fixmate.sort.bam.bai")
     output: 
         "variant_calling/var.vcf.gz"
-    # conda:
-    #     "envs/freebayes.yaml"
     message:
         "Rule {rule} processing"
     shell:
