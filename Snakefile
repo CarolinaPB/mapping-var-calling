@@ -1,23 +1,42 @@
 configfile: "config.yaml"
 import os
 
-direction=["R1","R2"]
+# direction=["R1","R2"]
+
+# TODO - change some files to temporary??
+# use wildcards for the file names?
+
+
 rule all:
     input:
-        "qualimap_report/report.pdf"
+        # "qualimap_report/report.pdf"
+        # os.path.join("sorted_reads/", config["BAM_prefix"] +".fixmate.sort.bam")
         # "fixmate/DTG-SG-188_R1_001.fixmate.bam"
         # "sorted_reads/DTG-SG-188_R1_001.fixmate.sort.bam",
         # "sorted_reads/DTG-SG-188_R2_001.fixmate.sort.bam"
         # expand("sorted_reads/DTG-SG-188_{dir}_001.fixmate.sort.bam", dir=direction)
         # expand("mapped_reads/DTG-SG-188_{dir}_001.fastq.gz.bam", dir=direction)
-
+        os.path.join("mapped_reads/", config["BAM_prefix"]+".bam")
 localrules: qualimap_report
 
-
+rule bwa_index:
+    input:
+        os.path.join(config["DATADIR"], config["assembly"])
+    output:
+        "checks/bwa_index.txt"
+    message:
+        "Rule {rule} processing"
+    conda:
+        "envs/bwa.yaml"
+    shell:
+        """
+        bwa index {input} && echo "bwa_index done"> {output}
+        """
 
 rule bwa_map:
     "Index, align reads and remove duplicates"
     input:
+        "checks/bwa_index.txt",
         assembly = os.path.join(config["DATADIR"], config["assembly"]),
         # reads = expand(os.path.join(config["DATADIR"],"SG_data/DTG-SG-188_{dir}_001.fastq.gz"), dir=direction)
         fwd = os.path.join(config["DATADIR"], config["fwd"]),
@@ -36,8 +55,8 @@ rule bwa_map:
     message:
         "Rule {rule} processing"
     shell:
+        # bwa index {input.assembly} | \
         """
-        bwa index {input.assembly} | 
         bwa mem -t {resources.cpus} {input.assembly} {input.fwd} {input.rev}| samblaster -r | samtools view -b - > {output}
         """
 

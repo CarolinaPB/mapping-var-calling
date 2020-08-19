@@ -1,10 +1,15 @@
+# Forward reads
 fwd: SG_data/DTG-SG-188_R1_001.fastq.gz
+# Reverse reads
 rev: SG_data/DTG-SG-188_R2_001.fastq.gz
 
+# Reference
 assembly: 
   HiC_assembly/Mgal6.fa
 
+# Directory with data to use (for reads and reference)
 DATADIR:
   /lustre/backup/WUR/ABGC/shared/ABGC_Projects/Turkey_Assembly/
 
+# prefix for the results
 BAM_prefix: DTG-SG-188
