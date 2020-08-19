@@ -1,6 +1,6 @@
 channels:
-- bioconda
-- conda-forge
 - defaults
+- conda-forge
+- bioconda
 dependencies:
 - qualimap=2.2.2a

@@ -1,6 +1,8 @@
 configfile: "config.yaml"
 import os
 
+wdir=os.getcwd()
+# workdir: /home/WUR/moiti001/snakemake-try
 
 # Resources that can be set individually in each rule:
     # Resources:
@@ -10,7 +12,7 @@ import os
 
 rule all:
     input:
-        "qualimap_report/report.pdf",
+        os.path.join(wdir, "sorted_reads/", config["BAM_prefix"] +".fixmate.sort_stats", "qualimap_report.pdf"),
         "variant_calling/var.vcf.gz"
 
 rule bwa_index:
@@ -84,14 +86,14 @@ rule qualimap_report:
         check="checks/samtools_index.txt",
         bam=os.path.join("sorted_reads/", config["BAM_prefix"] +".fixmate.sort.bam")
     output: 
-        "qualimap_report/report.pdf"
+        os.path.join(wdir, "sorted_reads/", config["BAM_prefix"] +".fixmate.sort_stats", "qualimap_report.pdf")
     conda:
         "envs/qualimap.yaml"
     message:
         "Rule {rule} processing"
     shell: 
-        "unset DISPLAY && qualimap bamqc -bam {input.bam} --java-mem-size=5G -nt 1 -outfile {output}"
-
+        #"unset DISPLAY && qualimap bamqc -bam {input.bam} --java-mem-size=5G -nt 1 -outdir qualimap_report -outfile {output}"
+        "unset DISPLAY && qualimap bamqc -bam {input.bam} --java-mem-size=5G -nt 1 -outformat PDF"
 
 rule freebayes_var:
     input: 

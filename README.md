@@ -36,6 +36,8 @@ use-conda: true
 ```
 (change the options between square brackets)
 
+### Check if the config.yaml in the snakemake directory has the file paths you want
+
 ## How to run
 
 Dry run (prints execution plan and commands that will be run)
@@ -50,6 +52,9 @@ snakemake --profile slurm --use-conda
 Other flags:
 - --forceal : run all the steps, even if it's not needed
 - --rerun-incomplete : rerun incomplete steps
+- -r [rulename]
+
+
 
 Directory tree
 ```
