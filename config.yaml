@@ -1,7 +1,7 @@
 # Forward reads
-fwd: SG_data/DTG-SG-188_R1_001.fastq.gz
+fwd: SG_data/DTG-SG-188_R1_001.subset.fastq.gz
 # Reverse reads
-rev: SG_data/DTG-SG-188_R2_001.fastq.gz
+rev: SG_data/DTG-SG-188_R2_001.subset.fastq.gz
 
 # Reference
 assembly: 
