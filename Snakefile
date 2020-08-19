@@ -11,7 +11,7 @@ rule all:
     input:
         # "qualimap_report/report.pdf",
         #  os.path.join("mapped_reads/", config["BAM_prefix"]+".bam")
-        "variant_calling/var.vcf"
+        "variant_calling/var.vcf.gz"
 
 rule bwa_index:
     # check if the index files exist, if not, run bwa index
@@ -114,10 +114,10 @@ rule freebayes_var:
         bam = os.path.join("sorted_reads/", config["BAM_prefix"] +".fixmate.sort.bam"), 
         bam_bai = os.path.join("sorted_reads/", config["BAM_prefix"] +".fixmate.sort.bam.bai")
     output: 
-        "variant_calling/var.vcf"
+        "variant_calling/var.vcf.gz"
     # conda:
     #     "envs/freebayes.yaml"
     message:
         "Rule {rule} processing"
     shell:
-        "module load freebayes && freebayes -f {input.reference} --min-base-quality 10 --min-alternate-fraction 0.2 --haplotype-length 0 --ploidy 2 --min-alternate-count 2 --bam {input.bam} > {output}"
+        "module load freebayes samtools vcflib/gcc/64/0.00.2019.07.10 && freebayes -f {input.reference} --use-best-n-alleles 4 --min-base-quality 10 --min-alternate-fraction 0.2 --haplotype-length 0 --ploidy 2 --min-alternate-count 2 --bam {input.bam} | vcffilter -f 'QUAL > 20' | bgzip -c > {output}"

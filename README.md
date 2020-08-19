@@ -20,7 +20,7 @@ conda create --name env_name
 conda activate env_name
 ```
 
-### Create hpc config file [good example](https://www.sichong.site/2020/02/25/snakemake-and-slurm-how-to-manage-workflow-with-resource-constraint-on-hpc/)
+### Create hpc config file ([good example](https://www.sichong.site/2020/02/25/snakemake-and-slurm-how-to-manage-workflow-with-resource-constraint-on-hpc/))
 
 #### Start with creating the directory
 ```
@@ -62,3 +62,18 @@ conda:
     envs/my_env.yaml
 ```
 you can specify the conda environment for each rule
+
+## How to run
+
+Dry run (prints execution plan and commands that will be run)
+```
+snakemake -np 
+```
+Run in the HPC with conda environments (necessary for some steps)
+```
+snakemake --profile slurm --use-conda
+```
+
+Other flags:
+- --forceal : run all the steps, even if it's not needed
+- --rerun-incomplete : rerun incomplete steps
