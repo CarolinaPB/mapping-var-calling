@@ -15,29 +15,39 @@ ASSEMBLY=os.path.join(config["DATADIR"], config["assembly"])
 
 rule all:
     input:
-        os.path.join(wdir, "sorted_reads/", config["my_prefix"] +".fixmate.sort_stats", "report.pdf"),
+        #os.path.join(wdir, "sorted_reads/", config["my_prefix"] +".fixmate.sort_stats", "report.pdf"),
         "variant_calling/var.vcf.gz", 
         "results/qualimap/report.pdf"
 
 localrules: move_qualimap_res
 
-rule bwa_index:
-    # check if the index files exist, if not, run bwa index
-    input:
-        ASSEMBLY
-    output:
-        "checks/bwa_index.txt"
-    resources:
-        time_min=40
-    message:
-        "Rule {rule} processing"
-    shell:
-        "scripts/bwa_index_check.sh {input} {output}"
+# rule bwa_index:
+#     # check if the index files exist, if not, run bwa index
+#     input:
+#         ASSEMBLY
+#     output:
+#         "checks/bwa_index.txt"
+#     resources:
+#         time_min=40
+#     message:
+#         "Rule {rule} processing"
+#     shell:
+#         "scripts/bwa_index_check.sh {input} {output}"
+
+# run bwa index if the index files don't exist
+if not os.path.isfile(os.path.join(ASSEMBLY+".amb")):
+    rule bwa_index:
+        input: 
+            ASSEMBLY
+        output:
+            os.path.join(ASSEMBLY+".amb")
+        shell:
+            "module load bwa && bwa index {input}"
 
 rule bwa_map:
     # Index, align reads and remove duplicates
     input:
-        check = "checks/bwa_index.txt",
+        # check = "checks/bwa_index.txt",
         assembly = ASSEMBLY,
         reads=expand(os.path.join(config["DATADIR"], "SG_data/", "{sample}.subset.fastq.gz"), sample=reads)
 
@@ -47,6 +57,8 @@ rule bwa_map:
         time_min=120,
         cpus=16,
         mem_mb=16000
+    conda:
+        "envs/bwa.yaml" # for samblaster
     message:
         "Rule {rule} processing"
     shell:
@@ -96,7 +108,7 @@ rule qualimap_report:
         check=rules.samtools_index.output, # not used in the command, but it's here so snakemake knows to run the rule after the indexing
         bam=rules.samtools_sort.output
     output: 
-        os.path.join(wdir, "sorted_reads/", config["my_prefix"] +".fixmate.sort_stats", "report.pdf")
+        temp(os.path.join(wdir, "sorted_reads/", config["my_prefix"] +".fixmate.sort_stats", "report.pdf"))
     conda:
         "envs/qualimap.yaml"
     resources:
@@ -114,9 +126,9 @@ rule move_qualimap_res:
         rules.qualimap_report.output
     output:
         file="results/qualimap/report.pdf",
-        newdir="results/qualimap/"
+        newdir= directory("results/qualimap/")
     shell:
-        "mv sorted_reads/*_stats/ {output.newdir} && sleep 10"
+        "mv sorted_reads/*_stats/* {output.newdir} && sleep 10"
 
 rule freebayes_var:
     input: 
