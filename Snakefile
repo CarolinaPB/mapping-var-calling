@@ -5,6 +5,7 @@ wdir=os.getcwd()
 
 # Get all reads that are in this dir
 reads, = glob_wildcards(os.path.join(config["DATADIR"], config["READS_DIR"], "{sample}.subset.fastq.gz"))
+ASSEMBLY=os.path.join(config["DATADIR"], config["assembly"])
 
 # Resources that can be set individually in each rule:
     # resources:
@@ -23,7 +24,7 @@ localrules: move_qualimap_res
 rule bwa_index:
     # check if the index files exist, if not, run bwa index
     input:
-        os.path.join(config["DATADIR"], config["assembly"])
+        ASSEMBLY
     output:
         "checks/bwa_index.txt"
     resources:
@@ -37,7 +38,7 @@ rule bwa_map:
     # Index, align reads and remove duplicates
     input:
         check = "checks/bwa_index.txt",
-        assembly = os.path.join(config["DATADIR"], config["assembly"]),
+        assembly = ASSEMBLY,
         reads=expand(os.path.join(config["DATADIR"], "SG_data/", "{sample}.subset.fastq.gz"), sample=reads)
 
     output:
@@ -55,7 +56,7 @@ rule bwa_map:
 
 rule samtools_fixmate:
     input: 
-        os.path.join("mapped_reads/", config["my_prefix"]+".bam")
+        rules.bwa_map.output
     output: 
         os.path.join("fixmate/", config["my_prefix"] +".fixmate.bam")
     resources:
@@ -68,7 +69,7 @@ rule samtools_fixmate:
 
 rule samtools_sort:
     input: 
-        os.path.join("fixmate/", config["my_prefix"] +".fixmate.bam")
+        rules.samtools_fixmate.output
     output: 
         os.path.join("sorted_reads/", config["my_prefix"] +".fixmate.sort.bam")
     resources:
@@ -80,21 +81,20 @@ rule samtools_sort:
 
 rule samtools_index:
     input:
-        os.path.join("sorted_reads/", config["my_prefix"] +".fixmate.sort.bam")
+        rules.samtools_sort.output
     output:
-        check="checks/samtools_index.txt",  # NOT NEEDED?
-        res=os.path.join("sorted_reads/", config["my_prefix"] +".fixmate.sort.bam.bai")
+        os.path.join("sorted_reads/", config["my_prefix"] +".fixmate.sort.bam.bai")
     resources:
         time_min=5
     message:
         "Rule {rule} processing"
     shell:
-        "module load samtools && samtools index -@ 4 {input} && echo '{rule} done' > {output.check}"
+        "module load samtools && samtools index -@ 4 {input}"
 
 rule qualimap_report:
     input: 
-        check=os.path.join("sorted_reads/", config["my_prefix"] +".fixmate.sort.bam.bai"), # not used in the command, but it's here so snakemake knows to run the rule after the indexing
-        bam=os.path.join("sorted_reads/", config["my_prefix"] +".fixmate.sort.bam")
+        check=rules.samtools_index.output, # not used in the command, but it's here so snakemake knows to run the rule after the indexing
+        bam=rules.samtools_sort.output
     output: 
         os.path.join(wdir, "sorted_reads/", config["my_prefix"] +".fixmate.sort_stats", "report.pdf")
     conda:
@@ -108,11 +108,21 @@ rule qualimap_report:
     shell: 
         "unset DISPLAY && qualimap bamqc -bam {input.bam} --java-mem-size=5G -nt 1 -outformat PDF"
 
+rule move_qualimap_res:
+# Move the qualimap results to a dir easier to find
+    input: 
+        rules.qualimap_report.output
+    output:
+        file="results/qualimap/report.pdf",
+        newdir="results/qualimap/"
+    shell:
+        "mv sorted_reads/*_stats/ {output.newdir} && sleep 10"
+
 rule freebayes_var:
     input: 
-        reference= os.path.join(config["DATADIR"], config["assembly"]),
-        bam = os.path.join("sorted_reads/", config["my_prefix"] +".fixmate.sort.bam"), 
-        bam_bai = os.path.join("sorted_reads/", config["my_prefix"] +".fixmate.sort.bam.bai") # not used in the command, but it's here so snakemake knows to run the rule after the indexing
+        reference= ASSEMBLY,
+        bam = rules.samtools_sort.output, 
+        bam_bai = rules.samtools_index.output # not used in the command, but it's here so snakemake knows to run the rule after the indexing
     output: 
         "variant_calling/var.vcf.gz"
     resources:
@@ -122,12 +132,4 @@ rule freebayes_var:
     shell:
         "module load freebayes samtools vcflib/gcc/64/0.00.2019.07.10 && freebayes -f {input.reference} --use-best-n-alleles 4 --min-base-quality 10 --min-alternate-fraction 0.2 --haplotype-length 0 --ploidy 2 --min-alternate-count 2 --bam {input.bam} | vcffilter -f 'QUAL > 20' | bgzip -c > {output}"
 
-rule move_qualimap_res:
-# Move the qualimap results to a dir easier to find
-    input: 
-        os.path.join(wdir, "sorted_reads/", config["my_prefix"] +".fixmate.sort_stats", "report.pdf")
-    output:
-        file="results/qualimap/report.pdf",
-        dir="results/qualimap/"
-    shell:
-        "mv sorted_reads/*_stats/ {output.dir}"
+

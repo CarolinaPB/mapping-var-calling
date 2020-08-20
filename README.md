@@ -29,7 +29,7 @@ mkdir -p ~/.config/snakemake/slurm
 #### Add config.yaml to that directory and add the specifications:
 ```
 jobs: 10
-cluster: "sbatch -t {resources.time_min} --mem={resources.mem_mb} -c {resources.cpus} --output=logs_slurm/{rule}.out --error=logs_slurm/{rule}.err --mail-type=[CHOOSE] --mail-user=[EMAIL]"
+cluster: "sbatch -t {resources.time_min} --mem={resources.mem_mb} -c {resources.cpus} --job-name={rule} --output=logs_slurm/{rule}.out --error=logs_slurm/{rule}.err --mail-type=[CHOOSE] --mail-user=[EMAIL]"
 default-resources: [time_min=180, cpus=16, mem_mb=16000]
 
 use-conda: true
@@ -109,7 +109,7 @@ mkdir -p ~/.config/snakemake/slurm
 #### Add config.yaml to that directory and add the specifications:
 ```
 jobs: 10
-cluster: "sbatch -t {resources.time_min} --mem={resources.mem_mb} -c {resources.cpus} --output=logs_slurm/{rule}.out --error=logs_slurm/{rule}.err --mail-type=[CHOOSE] --mail-user=[EMAIL]"
+cluster: "sbatch -t {resources.time_min} --mem={resources.mem_mb} -c {resources.cpus} --job-name={rule} --output=logs_slurm/{rule}.out --error=logs_slurm/{rule}.err --mail-type=[CHOOSE] --mail-user=[EMAIL]"
 default-resources: [time_min=180, cpus=16, mem_mb=16000]
 
 use-conda: true
