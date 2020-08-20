@@ -15,24 +15,11 @@ ASSEMBLY=os.path.join(config["DATADIR"], config["assembly"])
 
 rule all:
     input:
-        #os.path.join(wdir, "sorted_reads/", config["my_prefix"] +".fixmate.sort_stats", "report.pdf"),
         "variant_calling/var.vcf.gz", 
         "results/qualimap/report.pdf"
 
 localrules: move_qualimap_res
 
-# rule bwa_index:
-#     # check if the index files exist, if not, run bwa index
-#     input:
-#         ASSEMBLY
-#     output:
-#         "checks/bwa_index.txt"
-#     resources:
-#         time_min=40
-#     message:
-#         "Rule {rule} processing"
-#     shell:
-#         "scripts/bwa_index_check.sh {input} {output}"
 
 # run bwa index if the index files don't exist
 if not os.path.isfile(os.path.join(ASSEMBLY+".amb")):
@@ -57,8 +44,8 @@ rule bwa_map:
         time_min=120,
         cpus=16,
         mem_mb=16000
-    conda:
-        "envs/bwa.yaml" # for samblaster
+    # conda:
+    #     "envs/bwa.yaml" # for samblaster
     message:
         "Rule {rule} processing"
     shell:
@@ -109,8 +96,8 @@ rule qualimap_report:
         bam=rules.samtools_sort.output
     output: 
         temp(os.path.join(wdir, "sorted_reads/", config["my_prefix"] +".fixmate.sort_stats", "report.pdf"))
-    conda:
-        "envs/qualimap.yaml"
+    # conda:
+    #     "envs/qualimap.yaml"
     resources:
         time_min=10,
         cpus=1,
@@ -127,6 +114,9 @@ rule move_qualimap_res:
     output:
         file="results/qualimap/report.pdf",
         newdir= directory("results/qualimap/")
+    resources:
+        time_min=2,
+        cpus=1
     shell:
         "mv sorted_reads/*_stats/* {output.newdir} && sleep 10"
 

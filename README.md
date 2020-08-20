@@ -10,7 +10,7 @@ Options: create your own files/ copy from my directory /home/WUR/moiti001/snakem
 ## If you copy my dir/ github repo:
 ### Create conda environment
 ```
-conda create --name env_name
+conda create --name <env> --file requirements.txt
 ```
 
 ### Activate environment
@@ -50,32 +50,45 @@ snakemake --profile slurm --use-conda
 ```
 
 Other flags:
-- --forceal : run all the steps, even if it's not needed
+- --forceall : run all the steps, even if it's not needed
 - --rerun-incomplete : rerun incomplete steps
-- -r [rulename]
+- -r [rulename] : run this specific rule
 
 
 
 Directory tree
 ```
-snakemake-try/
-├── checks
+snakemake_try
 ├── config.yaml
 ├── envs
 │   ├── bwa.yaml
 │   ├── freebayes.yaml
 │   └── qualimap.yaml
 ├── fixmate
+│   └── DTG-SG-188.fixmate.bam
 ├── logs_slurm
 ├── mapped_reads
+│   └── DTG-SG-188.bam
 ├── others
+│   └── mapping_bwa.sh
 ├── README.md
+├── requirements.txt
+├── results
+│   └── qualimap
+│       ├── genome_results.txt
+│       └── report.pdf
 ├── scripts
 │   ├── bwa_index_check.sh
 │   └── mapping.sh
 ├── Snakefile
 ├── sorted_reads
+│   ├── DTG-SG-188.fixmate.sort.bam
+│   ├── DTG-SG-188.fixmate.sort.bam.bai
+│   └── DTG-SG-188.fixmate.sort_stats
+│       ├── genome_results.txt
+│       └── report.pdf
 └── variant_calling
+    └── var.vcf.gz
 ```
 
 
@@ -91,7 +104,7 @@ cd XXX
 
 ### Create conda environment
 ```
-conda create --name env_name
+conda create --name <env> --file requirements.txt
 ```
 
 ### Activate environment
