@@ -1,3 +1,4 @@
-.snakemake/*
-logs_slurm/*
+*.snakemake/*
+logs_slurm/*.err
+logs_slurm/*.out
 mapped_reads/*
