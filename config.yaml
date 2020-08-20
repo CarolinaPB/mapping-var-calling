@@ -1,7 +1,5 @@
-# Forward reads
-fwd: SG_data/DTG-SG-188_R1_001.subset.fastq.gz
-# Reverse reads
-rev: SG_data/DTG-SG-188_R2_001.subset.fastq.gz
+# Reads dir
+READS_DIR: SG_data/
 
 # Reference
 assembly: 
@@ -12,4 +10,4 @@ DATADIR:
   /lustre/backup/WUR/ABGC/shared/ABGC_Projects/Turkey_Assembly/
 
 # prefix for the results
-BAM_prefix: DTG-SG-188
+my_prefix: DTG-SG-188

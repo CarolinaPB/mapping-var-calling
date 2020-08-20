@@ -119,6 +119,10 @@ First make sure you're in you snakemake directory
 ```
 mkdir envs
 ```
+### Create directory for the slurm log files
+```
+mkdir logs_slurm
+```
 ### Create a Snakefile 
 ```
 configfile: "config.yaml"
