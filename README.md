@@ -39,6 +39,7 @@ use-conda: true
 ### Check if the config.yaml in the snakemake directory has the file paths you want
 
 ## How to run
+First it's good to always make a dry run: shows if there are any problems with the rules and we can use it to look at the commands and verify that all the fields are in the correct place
 
 Dry run (prints execution plan and commands that will be run)
 ```
@@ -53,10 +54,11 @@ Other flags:
 - --forceall : run all the steps, even if it's not needed
 - --rerun-incomplete : rerun incomplete steps
 - -r [rulename] : run this specific rule
+- --max-jobs-per-second \<N> : sometimes there are some problems with the job timings/ many jobs being submitted at once so it's good to choose a low number (I tried with 2 and it worked well)
 
 
 
-Directory tree
+Directory tree (at the end of the run)
 ```
 snakemake_try
 ├── config.yaml
@@ -85,8 +87,6 @@ snakemake_try
 │   ├── DTG-SG-188.fixmate.sort.bam
 │   ├── DTG-SG-188.fixmate.sort.bam.bai
 │   └── DTG-SG-188.fixmate.sort_stats
-│       ├── genome_results.txt
-│       └── report.pdf
 └── variant_calling
     └── var.vcf.gz
 ```
