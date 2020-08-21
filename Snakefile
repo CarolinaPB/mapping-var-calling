@@ -3,11 +3,13 @@ import os
 
 wdir=os.getcwd()
 
-## problem - if I remove the "subset" from {sample}.subset.fastq.gz, then both the subset and the others are going to be used ({sample}.subset.fastq.gz here in the next lines and also on the bwa_map rule)
+## problem - if I remove the "subset" from {sample}.subset.fastq.gz, then both the subset and the others are going to be used ({sample}.subset.fastq.gz here in the next lines and also on the bwa_map rule) 
+#- can instead have each read defined individually in the config file (FWD=PATH and REV=PATH)
 
 # Get all reads that are in this dir
-# reads, = glob_wildcards(os.path.join(config["DATADIR"], config["READS_DIR"], "{sample}.subset.fastq.gz")) ### FOR SUBSET uncomment this line and comment out the next
-reads, = glob_wildcards(os.path.join(config["DATADIR"], config["READS_DIR"], "{sample}001.fastq.gz"))
+reads, = glob_wildcards(os.path.join(config["DATADIR"], config["READS_DIR"], "{sample}.subset.fastq.gz")) ### FOR SUBSET uncomment this line and comment out the next
+# reads, = glob_wildcards(os.path.join(config["DATADIR"], config["READS_DIR"], "{sample}001.fastq.gz"))
+
 ASSEMBLY=os.path.join(config["DATADIR"], config["assembly"])
 
 # Resources that can be set individually in each rule:
@@ -15,6 +17,7 @@ ASSEMBLY=os.path.join(config["DATADIR"], config["assembly"])
         # time_min=XXX (default 180),
         # cpus=XXX (default 16),
         # mem_mb=XXX (default 16000)
+
 
 rule all:
     input:
@@ -37,10 +40,9 @@ if not os.path.isfile(os.path.join(ASSEMBLY+".amb")):
 rule bwa_map:
     # Index, align reads and remove duplicates
     input:
-        # check = "checks/bwa_index.txt",
         assembly = ASSEMBLY,
-        # reads=expand(os.path.join(config["DATADIR"], "SG_data/", "{sample}.subset.fastq.gz"), sample=reads) ### FOR SUBSET uncomment this line and comment out the next
-        reads=expand(os.path.join(config["DATADIR"], "SG_data/", "{sample}001.fastq.gz"), sample=reads)
+        reads=expand(os.path.join(config["DATADIR"], "SG_data/", "{sample}.subset.fastq.gz"), sample=reads) ### FOR SUBSET uncomment this line and comment out the next
+        # reads=expand(os.path.join(config["DATADIR"], "SG_data/", "{sample}001.fastq.gz"), sample=reads)
 
     output:
         os.path.join("mapped_reads/", config["my_prefix"]+".bam")
@@ -48,14 +50,10 @@ rule bwa_map:
         time_min=120,
         cpus=16,
         mem_mb=16000
-    # conda:
-    #     "envs/bwa.yaml" # for samblaster
     message:
         "Rule {rule} processing"
     shell:
-        """
-        module load bwa samtools && bwa mem -t {resources.cpus} {input.assembly} {input.reads} | samblaster -r | samtools view -b - > {output}
-        """
+        "module load bwa samtools && bwa mem -t {resources.cpus} {input.assembly} {input.reads} | samblaster -r | samtools view -b - > {output}"
 
 rule samtools_fixmate:
     input: 
@@ -100,8 +98,6 @@ rule qualimap_report:
         bam=rules.samtools_sort.output
     output: 
         temp(os.path.join(wdir, "sorted_reads/", config["my_prefix"] +".fixmate.sort_stats", "report.pdf"))
-    # conda:
-    #     "envs/qualimap.yaml"
     resources:
         time_min=10,
         cpus=1,
