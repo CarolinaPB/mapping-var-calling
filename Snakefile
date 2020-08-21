@@ -24,7 +24,7 @@ rule all:
         "variant_calling/var.vcf.gz", 
         "results/qualimap/report.pdf"
 
-localrules: move_qualimap_res
+# localrules: move_qualimap_res
 
 
 # run bwa index if the index files don't exist
@@ -34,6 +34,8 @@ if not os.path.isfile(os.path.join(ASSEMBLY+".amb")):
             ASSEMBLY
         output:
             os.path.join(ASSEMBLY+".amb")
+        group:
+            "group_all"
         shell:
             "module load bwa && bwa index {input}"
 
@@ -45,63 +47,58 @@ rule bwa_map:
         # reads=expand(os.path.join(config["DATADIR"], "SG_data/", "{sample}001.fastq.gz"), sample=reads)
 
     output:
-        os.path.join("mapped_reads/", config["my_prefix"]+".bam")
-    resources: 
-        time_min=120,
-        cpus=16,
-        mem_mb=16000
+        temp(os.path.join("mapped_reads/", config["my_prefix"]+".bam"))
+    # resources: 
+    #     time_min=120,
+    #     cpus=16,
+    #     mem_mb=16000
+    group:
+        "group_all"
     message:
         "Rule {rule} processing"
     shell:
         "module load bwa samtools && bwa mem -t {resources.cpus} {input.assembly} {input.reads} | samblaster -r | samtools view -b - > {output}"
 
-rule samtools_fixmate:
+rule samtools_sort:
     input: 
         rules.bwa_map.output
     output: 
-        os.path.join("fixmate/", config["my_prefix"] +".fixmate.bam")
-    resources:
-        time_min=10
+        os.path.join("sorted_reads/", config["my_prefix"] +".sort.bam"))
+    # resources:
+    #     time_min=5
+    # group:
+    #     "group_all"
     message:
         "Rule {rule} processing"
     shell: 
-        "module load samtools && samtools fixmate {input} {output}"
-
-
-rule samtools_sort:
-    input: 
-        rules.samtools_fixmate.output
-    output: 
-        os.path.join("sorted_reads/", config["my_prefix"] +".fixmate.sort.bam")
-    resources:
-        time_min=5
-    message:
-        "Rule {rule} processing"
-    shell: 
-        "module load samtools && samtools sort -m 2G -@ 6 -O bam {input} > {output}"
+        "module load samtools && samtools sort -m 2G -@ {resources.cpus} -O bam {input} > {output}"
 
 rule samtools_index:
     input:
         rules.samtools_sort.output
     output:
-        os.path.join("sorted_reads/", config["my_prefix"] +".fixmate.sort.bam.bai")
-    resources:
-        time_min=5
+        os.path.join("sorted_reads/", config["my_prefix"] +".sort.bam.bai")
+    # resources:
+    #     time_min=5
+    group:
+        "group_all"
     message:
         "Rule {rule} processing"
     shell:
-        "module load samtools && samtools index -@ 4 {input}"
+        "module load samtools && samtools index -@ {resources.cpus} {input}"
 
 rule qualimap_report:
     input: 
         check=rules.samtools_index.output, # not used in the command, but it's here so snakemake knows to run the rule after the indexing
         bam=rules.samtools_sort.output
     output: 
-        temp(os.path.join(wdir, "sorted_reads/", config["my_prefix"] +".fixmate.sort_stats", "report.pdf"))
-    resources:
-        time_min=10,
-        cpus=1,
-        mem_mb=2000
+        temp(os.path.join(wdir, "sorted_reads/", config["my_prefix"] +".sort_stats", "report.pdf"))
+    # resources:
+    #     time_min=10,
+    #     cpus=1,
+    #     mem_mb=2000
+    group:
+        "group_all"
     message:
         "Rule {rule} processing"
     shell: 
@@ -114,9 +111,11 @@ rule move_qualimap_res:
     output:
         file="results/qualimap/report.pdf",
         newdir= directory("results/qualimap/")
-    resources:
-        time_min=2,
-        cpus=1
+    # resources:
+    #     time_min=2,
+    #     cpus=1
+    group:
+        "group_all"
     shell:
         "mv sorted_reads/*_stats/* {output.newdir} && sleep 10"
 
@@ -127,8 +126,10 @@ rule freebayes_var:
         bam_bai = rules.samtools_index.output # not used in the command, but it's here so snakemake knows to run the rule after the indexing
     output: 
         "variant_calling/var.vcf.gz"
-    resources:
-        time_min=40
+    # resources:
+    #     time_min=40
+    group:
+        "group_all"
     message:
         "Rule {rule} processing"
     shell:

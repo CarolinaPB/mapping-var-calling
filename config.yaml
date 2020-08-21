@@ -1,4 +1,4 @@
-# Reads dir
+# Reads dir (will be appended to DATADIR)
 READS_DIR: SG_data/
 
 # Reference
