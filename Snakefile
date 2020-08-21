@@ -7,8 +7,8 @@ wdir=os.getcwd()
 #- can instead have each read defined individually in the config file (FWD=PATH and REV=PATH)
 
 # Get all reads that are in this dir
-reads, = glob_wildcards(os.path.join(config["DATADIR"], config["READS_DIR"], "{sample}.subset.fastq.gz")) ### FOR SUBSET uncomment this line and comment out the next
-# reads, = glob_wildcards(os.path.join(config["DATADIR"], config["READS_DIR"], "{sample}001.fastq.gz"))
+# reads, = glob_wildcards(os.path.join(config["DATADIR"], config["READS_DIR"], "{sample}.subset.fastq.gz")) ### FOR SUBSET uncomment this line and comment out the next
+reads, = glob_wildcards(os.path.join(config["DATADIR"], config["READS_DIR"], "{sample}001.fastq.gz"))
 
 ASSEMBLY=os.path.join(config["DATADIR"], config["assembly"])
 
@@ -43,15 +43,13 @@ rule bwa_map:
     # Index, align reads and remove duplicates
     input:
         assembly = ASSEMBLY,
-        reads=expand(os.path.join(config["DATADIR"], "SG_data/", "{sample}.subset.fastq.gz"), sample=reads) ### FOR SUBSET uncomment this line and comment out the next
-        # reads=expand(os.path.join(config["DATADIR"], "SG_data/", "{sample}001.fastq.gz"), sample=reads)
+        # reads=expand(os.path.join(config["DATADIR"], "SG_data/", "{sample}.subset.fastq.gz"), sample=reads) ### FOR SUBSET uncomment this line and comment out the next
+        reads=expand(os.path.join(config["DATADIR"], "SG_data/", "{sample}001.fastq.gz"), sample=reads)
 
     output:
         temp(os.path.join("mapped_reads/", config["my_prefix"]+".bam"))
-    # resources: 
-    #     time_min=120,
-    #     cpus=16,
-    #     mem_mb=16000
+    resources: 
+        cpus=16
     group:
         "group_all"
     message:
@@ -63,11 +61,11 @@ rule samtools_sort:
     input: 
         rules.bwa_map.output
     output: 
-        os.path.join("sorted_reads/", config["my_prefix"] +".sort.bam"))
-    # resources:
-    #     time_min=5
-    # group:
-    #     "group_all"
+        os.path.join("sorted_reads/", config["my_prefix"] +".sort.bam")
+    resources:
+        cpus=16
+    group:
+        "group_all"
     message:
         "Rule {rule} processing"
     shell: 
@@ -78,8 +76,8 @@ rule samtools_index:
         rules.samtools_sort.output
     output:
         os.path.join("sorted_reads/", config["my_prefix"] +".sort.bam.bai")
-    # resources:
-    #     time_min=5
+    resources:
+        cpus=16
     group:
         "group_all"
     message:
