@@ -21,6 +21,8 @@ conda activate env_name
 
 ### Create hpc config file ([good example](https://www.sichong.site/2020/02/25/snakemake-and-slurm-how-to-manage-workflow-with-resource-constraint-on-hpc/))
 
+Necessary for snakemake to prepare and send jobs
+
 #### Start with creating the directory
 ```
 mkdir -p ~/.config/snakemake/slurm

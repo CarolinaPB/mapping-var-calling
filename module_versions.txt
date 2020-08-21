@@ -1,0 +1,6 @@
+# modules and versions being used
+
+samtools/gcc/64/1.9                        
+freebayes/gcc/64/1.3.1                    
+bwa/gcc/64/0.7.17
+vcflib/gcc/64/0.00.2019.07.10             
