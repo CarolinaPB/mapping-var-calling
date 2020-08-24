@@ -9,3 +9,5 @@ DATADIR: /lustre/backup/WUR/ABGC/shared/ABGC_Projects/Turkey_Assembly/
 
 # prefix for the results
 my_prefix: DTG-SG-188
+
+OUTDIR: /home/WUR/moiti001/mapping_all_short

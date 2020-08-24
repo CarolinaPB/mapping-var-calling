@@ -21,8 +21,8 @@ ASSEMBLY=os.path.join(config["DATADIR"], config["assembly"])
 
 rule all:
     input:
-        "variant_calling/var.vcf.gz", 
-        "results/qualimap/report.pdf"
+        os.path.join(config["OUTDIR"], "variant_calling/var.vcf.gz"), 
+        os.path.join(config["OUTDIR"],"results/qualimap/genome_results.txt")
 
 # localrules: move_qualimap_res
 
@@ -47,7 +47,7 @@ rule bwa_map:
         reads=expand(os.path.join(config["DATADIR"], "SG_data/", "{sample}001.fastq.gz"), sample=reads)
 
     output:
-        temp(os.path.join("mapped_reads/", config["my_prefix"]+".bam"))
+        temp(os.path.join(config["OUTDIR"], "mapped_reads/", config["my_prefix"]+".bam"))
     resources: 
         cpus=16
     group:
@@ -61,7 +61,7 @@ rule samtools_sort:
     input: 
         rules.bwa_map.output
     output: 
-        os.path.join("sorted_reads/", config["my_prefix"] +".sort.bam")
+        os.path.join(config["OUTDIR"],"sorted_reads/", config["my_prefix"] +".sort.bam")
     resources:
         cpus=16
     group:
@@ -75,7 +75,7 @@ rule samtools_index:
     input:
         rules.samtools_sort.output
     output:
-        os.path.join("sorted_reads/", config["my_prefix"] +".sort.bam.bai")
+        os.path.join(config["OUTDIR"],"sorted_reads/", config["my_prefix"] +".sort.bam.bai")
     resources:
         cpus=16
     group:
@@ -90,7 +90,9 @@ rule qualimap_report:
         check=rules.samtools_index.output, # not used in the command, but it's here so snakemake knows to run the rule after the indexing
         bam=rules.samtools_sort.output
     output: 
-        temp(os.path.join(wdir, "sorted_reads/", config["my_prefix"] +".sort_stats", "report.pdf"))
+        outdir=directory(os.path.join(config["OUTDIR"],"results/qualimap/")),
+        outfile=os.path.join(config["OUTDIR"],"results/qualimap/genome_results.txt")
+        # temp(os.path.join(wdir, "sorted_reads/", config["my_prefix"] +".sort_stats", "report.pdf"))
     # resources:
     #     time_min=10,
     #     cpus=1,
@@ -100,22 +102,22 @@ rule qualimap_report:
     message:
         "Rule {rule} processing"
     shell: 
-        "unset DISPLAY && qualimap bamqc -bam {input.bam} --java-mem-size=5G -nt 1 -outformat PDF"
+        "unset DISPLAY && qualimap bamqc -bam {input.bam} --java-mem-size=5G -nt 1 -outdir {output.outdir}"
 
-rule move_qualimap_res:
-# Move the qualimap results to a dir easier to find
-    input: 
-        rules.qualimap_report.output
-    output:
-        file="results/qualimap/report.pdf",
-        newdir= directory("results/qualimap/")
-    # resources:
-    #     time_min=2,
-    #     cpus=1
-    group:
-        "group_all"
-    shell:
-        "mv sorted_reads/*_stats/* {output.newdir} && sleep 10"
+# rule move_qualimap_res:
+# # Move the qualimap results to a dir easier to find
+#     input: 
+#         rules.qualimap_report.output
+#     output:
+#         file="results/qualimap/report.pdf",
+#         newdir= directory("results/qualimap/")
+#     # resources:
+#     #     time_min=2,
+#     #     cpus=1
+#     group:
+#         "group_all"
+#     shell:
+#         "mv sorted_reads/*_stats/* {output.newdir} && sleep 10"
 
 rule freebayes_var:
     input: 
@@ -123,7 +125,7 @@ rule freebayes_var:
         bam = rules.samtools_sort.output, 
         bam_bai = rules.samtools_index.output # not used in the command, but it's here so snakemake knows to run the rule after the indexing
     output: 
-        "variant_calling/var.vcf.gz"
+        os.path.join(config["OUTDIR"],"variant_calling/var.vcf.gz")
     # resources:
     #     time_min=40
     group:
