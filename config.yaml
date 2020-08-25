@@ -1,13 +1,15 @@
-# Reads dir (will be appended to DATADIR)
-READS_DIR: SG_data/
+# Set directory where snakemake will run and the results will be saved
+OUTDIR: /home/WUR/moiti001/mapping_all_short
+
+# Directory with the reads (will be appended to DATADIR) - snakemake will use files in this directory that end in .fastq.gz (can be changed in the snakefile)
+READS_DIR: /lustre/backup/WUR/ABGC/shared/ABGC_Projects/Turkey_Assembly/SG_data/
 
 # Reference
-assembly: HiC_assembly/Mgal6.fa
+assembly: /lustre/backup/WUR/ABGC/shared/ABGC_Projects/Turkey_Assembly/HiC_assembly/Mgal6.fa
 
-# Directory with data to use (for reads and reference)
-DATADIR: /lustre/backup/WUR/ABGC/shared/ABGC_Projects/Turkey_Assembly/
+# # Directory with data to use (for reads and reference)
+# DATADIR: /lustre/backup/WUR/ABGC/shared/ABGC_Projects/Turkey_Assembly/
 
 # prefix for the results
 my_prefix: DTG-SG-188
 
-OUTDIR: /home/WUR/moiti001/mapping_all_short

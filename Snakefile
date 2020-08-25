@@ -1,16 +1,18 @@
 configfile: "config.yaml"
 import os
 
-wdir=os.getcwd()
+# wdir=os.getcwd()
+# Sets the working directory to the directory where you want to save the results (set in the config file)
+workdir: config["OUTDIR"]
 
 ## problem - if I remove the "subset" from {sample}.subset.fastq.gz, then both the subset and the others are going to be used ({sample}.subset.fastq.gz here in the next lines and also on the bwa_map rule) 
 #- can instead have each read defined individually in the config file (FWD=PATH and REV=PATH)
 
 # Get all reads that are in this dir
-# reads, = glob_wildcards(os.path.join(config["DATADIR"], config["READS_DIR"], "{sample}.subset.fastq.gz")) ### FOR SUBSET uncomment this line and comment out the next
-reads, = glob_wildcards(os.path.join(config["DATADIR"], config["READS_DIR"], "{sample}001.fastq.gz"))
+# reads, = glob_wildcards(os.path.join( config["READS_DIR"], "{sample}.subset.fastq.gz")) ### FOR SUBSET uncomment this line and comment out the next
+reads, = glob_wildcards(os.path.join(config["READS_DIR"], "{sample}001.fastq.gz"))
 
-ASSEMBLY=os.path.join(config["DATADIR"], config["assembly"])
+ASSEMBLY=config["assembly"]
 
 # Resources that can be set individually in each rule:
     # resources:
@@ -21,8 +23,8 @@ ASSEMBLY=os.path.join(config["DATADIR"], config["assembly"])
 
 rule all:
     input:
-        os.path.join(config["OUTDIR"], "variant_calling/var.vcf.gz"), 
-        os.path.join(config["OUTDIR"],"results/qualimap/genome_results.txt")
+        "variant_calling/var.vcf.gz", 
+        "results/qualimap/genome_results.txt"
 
 # localrules: move_qualimap_res
 
@@ -43,11 +45,11 @@ rule bwa_map:
     # Index, align reads and remove duplicates
     input:
         assembly = ASSEMBLY,
-        # reads=expand(os.path.join(config["DATADIR"], "SG_data/", "{sample}.subset.fastq.gz"), sample=reads) ### FOR SUBSET uncomment this line and comment out the next
-        reads=expand(os.path.join(config["DATADIR"], "SG_data/", "{sample}001.fastq.gz"), sample=reads)
+        # reads=expand(os.path.join("SG_data/", "{sample}.subset.fastq.gz"), sample=reads) ### FOR SUBSET uncomment this line and comment out the next
+        reads=expand(config["READS_DIR"], "{sample}001.fastq.gz"), sample=reads)
 
     output:
-        temp(os.path.join(config["OUTDIR"], "mapped_reads/", config["my_prefix"]+".bam"))
+        temp(os.path.join("mapped_reads/", config["my_prefix"]+".bam"))
     resources: 
         cpus=16
     group:
@@ -61,7 +63,7 @@ rule samtools_sort:
     input: 
         rules.bwa_map.output
     output: 
-        os.path.join(config["OUTDIR"],"sorted_reads/", config["my_prefix"] +".sort.bam")
+        os.path.join("sorted_reads/", config["my_prefix"] +".sort.bam")
     resources:
         cpus=16
     group:
@@ -75,7 +77,7 @@ rule samtools_index:
     input:
         rules.samtools_sort.output
     output:
-        os.path.join(config["OUTDIR"],"sorted_reads/", config["my_prefix"] +".sort.bam.bai")
+        os.path.join("sorted_reads/", config["my_prefix"] +".sort.bam.bai")
     resources:
         cpus=16
     group:
@@ -90,8 +92,8 @@ rule qualimap_report:
         check=rules.samtools_index.output, # not used in the command, but it's here so snakemake knows to run the rule after the indexing
         bam=rules.samtools_sort.output
     output: 
-        outdir=directory(os.path.join(config["OUTDIR"],"results/qualimap/")),
-        outfile=os.path.join(config["OUTDIR"],"results/qualimap/genome_results.txt")
+        outdir=directory("results/qualimap/"),
+        outfile="results/qualimap/genome_results.txt"
         # temp(os.path.join(wdir, "sorted_reads/", config["my_prefix"] +".sort_stats", "report.pdf"))
     # resources:
     #     time_min=10,
@@ -125,7 +127,7 @@ rule freebayes_var:
         bam = rules.samtools_sort.output, 
         bam_bai = rules.samtools_index.output # not used in the command, but it's here so snakemake knows to run the rule after the indexing
     output: 
-        os.path.join(config["OUTDIR"],"variant_calling/var.vcf.gz")
+        "variant_calling/var.vcf.gz"
     # resources:
     #     time_min=40
     group:
