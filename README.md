@@ -1,4 +1,5 @@
-# WUR_mappingtry
+# Mapping-var-calling
+
 Install `conda` if you don't have it
 
 ### Create conda environment
