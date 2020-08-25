@@ -46,8 +46,7 @@ rule bwa_map:
     input:
         assembly = ASSEMBLY,
         # reads=expand(os.path.join("SG_data/", "{sample}.subset.fastq.gz"), sample=reads) ### FOR SUBSET uncomment this line and comment out the next
-        reads=expand(config["READS_DIR"], "{sample}001.fastq.gz"), sample=reads)
-
+        reads=expand(os.path.join(config["READS_DIR"], "{sample}001.fastq.gz"), sample=reads)
     output:
         temp(os.path.join("mapped_reads/", config["my_prefix"]+".bam"))
     resources: 
