@@ -9,8 +9,8 @@ workdir: config["OUTDIR"]
 #- can instead have each read defined individually in the config file (FWD=PATH and REV=PATH)
 
 # Get all reads that are in this dir
-# reads, = glob_wildcards(os.path.join( config["READS_DIR"], "{sample}.subset.fastq.gz")) ### FOR SUBSET uncomment this line and comment out the next
-reads, = glob_wildcards(os.path.join(config["READS_DIR"], "{sample}001.fastq.gz"))
+reads, = glob_wildcards(os.path.join( config["READS_DIR"], "{sample}.subset.fastq.gz")) ### FOR SUBSET uncomment this line and comment out the next
+# reads, = glob_wildcards(os.path.join(config["READS_DIR"], "{sample}001.fastq.gz"))
 
 ASSEMBLY=config["assembly"]
 
@@ -45,8 +45,8 @@ rule bwa_map:
     # Index, align reads and remove duplicates
     input:
         assembly = ASSEMBLY,
-        # reads=expand(os.path.join("SG_data/", "{sample}.subset.fastq.gz"), sample=reads) ### FOR SUBSET uncomment this line and comment out the next
-        reads=expand(os.path.join(config["READS_DIR"], "{sample}001.fastq.gz"), sample=reads)
+        reads=expand(os.path.join(config["READS_DIR"], "{sample}.subset.fastq.gz"), sample=reads) ### FOR SUBSET uncomment this line and comment out the next
+        # reads=expand(os.path.join(config["READS_DIR"], "{sample}001.fastq.gz"), sample=reads)
     output:
         temp(os.path.join("mapped_reads/", config["my_prefix"]+".bam"))
     resources: 
@@ -104,21 +104,6 @@ rule qualimap_report:
         "Rule {rule} processing"
     shell: 
         "unset DISPLAY && qualimap bamqc -bam {input.bam} --java-mem-size=5G -nt 1 -outdir {output.outdir}"
-
-# rule move_qualimap_res:
-# # Move the qualimap results to a dir easier to find
-#     input: 
-#         rules.qualimap_report.output
-#     output:
-#         file="results/qualimap/report.pdf",
-#         newdir= directory("results/qualimap/")
-#     # resources:
-#     #     time_min=2,
-#     #     cpus=1
-#     group:
-#         "group_all"
-#     shell:
-#         "mv sorted_reads/*_stats/* {output.newdir} && sleep 10"
 
 rule freebayes_var:
     input: 
