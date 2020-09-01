@@ -1,5 +1,5 @@
 # Set directory where snakemake will run and the results will be saved
-OUTDIR: /home/WUR/moiti001/mapping_all_short
+OUTDIR: /lustre/nobackup/WUR/ABGC/moiti001/mapping_all_short
 
 # Directory with the reads (will be appended to DATADIR) - snakemake will use files in this directory that end in .fastq.gz (can be changed in the snakefile)
 READS_DIR: /lustre/backup/WUR/ABGC/shared/ABGC_Projects/Turkey_Assembly/SG_data/
