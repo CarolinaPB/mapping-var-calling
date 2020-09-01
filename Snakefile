@@ -9,8 +9,8 @@ workdir: config["OUTDIR"]
 #- can instead have each read defined individually in the config file (FWD=PATH and REV=PATH)
 
 # Get all reads that are in this dir
-reads, = glob_wildcards(os.path.join( config["READS_DIR"], "{sample}.subset.fastq.gz")) ### FOR SUBSET uncomment this line and comment out the next
-# reads, = glob_wildcards(os.path.join(config["READS_DIR"], "{sample}001.fastq.gz"))
+# reads, = glob_wildcards(os.path.join( config["READS_DIR"], "{sample}.subset.fastq.gz")) ### FOR SUBSET uncomment this line and comment out the next
+reads, = glob_wildcards(os.path.join(config["READS_DIR"], "{sample}001.fastq.gz"))
 
 ASSEMBLY=config["assembly"]
 
@@ -45,8 +45,8 @@ rule bwa_map:
     # Index, align reads and remove duplicates
     input:
         assembly = ASSEMBLY,
-        reads=expand(os.path.join(config["READS_DIR"], "{sample}.subset.fastq.gz"), sample=reads) ### FOR SUBSET uncomment this line and comment out the next
-        # reads=expand(os.path.join(config["READS_DIR"], "{sample}001.fastq.gz"), sample=reads)
+        # reads=expand(os.path.join(config["READS_DIR"], "{sample}.subset.fastq.gz"), sample=reads) ### FOR SUBSET uncomment this line and comment out the next
+        reads=expand(os.path.join(config["READS_DIR"], "{sample}001.fastq.gz"), sample=reads)
     output:
         temp(os.path.join("mapped_reads/", config["my_prefix"]+".bam"))
     resources: 
@@ -64,7 +64,7 @@ rule samtools_sort:
     output: 
         os.path.join("sorted_reads/", config["my_prefix"] +".sort.bam")
     resources:
-        cpus=16
+        cpus=7
     group:
         "group_all"
     message:
@@ -103,7 +103,7 @@ rule qualimap_report:
     message:
         "Rule {rule} processing"
     shell: 
-        "unset DISPLAY && qualimap bamqc -bam {input.bam} --java-mem-size=5G -nt 1 -outdir {output.outdir}"
+        "unset DISPLAY && qualimap bamqc -bam {input.bam} --java-mem-size=16G -nt 1 -outdir {output.outdir}"
 
 rule freebayes_var:
     input: 
