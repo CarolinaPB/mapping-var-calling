@@ -23,7 +23,7 @@ ASSEMBLY=config["assembly"]
 
 rule all:
     input:
-        "variant_calling/var.vcf.gz", 
+        "variant_calling/var.vcf.gz.tbi", 
         "results/qualimap/genome_results.txt"
 
 # localrules: move_qualimap_res
@@ -45,6 +45,7 @@ rule bwa_map:
     # Index, align reads and remove duplicates
     input:
         assembly = ASSEMBLY,
+        idx = os.path.join(ASSEMBLY+".amb"),
         # reads=expand(os.path.join(config["READS_DIR"], "{sample}.subset.fastq.gz"), sample=reads) ### FOR SUBSET uncomment this line and comment out the next
         reads=expand(os.path.join(config["READS_DIR"], "{sample}001.fastq.gz"), sample=reads)
     output:
@@ -91,19 +92,21 @@ rule qualimap_report:
         check=rules.samtools_index.output, # not used in the command, but it's here so snakemake knows to run the rule after the indexing
         bam=rules.samtools_sort.output
     output: 
-        outdir=directory("results/qualimap/"),
+        # outdir=directory("results/qualimap/"),
         outfile="results/qualimap/genome_results.txt"
         # temp(os.path.join(wdir, "sorted_reads/", config["my_prefix"] +".sort_stats", "report.pdf"))
     # resources:
     #     time_min=10,
     #     cpus=1,
     #     mem_mb=2000
+    params:
+        outdir = "results/qualimap/"
     group:
         "group_all"
     message:
         "Rule {rule} processing"
     shell: 
-        "unset DISPLAY && qualimap bamqc -bam {input.bam} --java-mem-size=16G -nt 1 -outdir {output.outdir}"
+        "unset DISPLAY && qualimap bamqc -bam {input.bam} --java-mem-size=16G -nt 1 -outdir {params.outdir}"
 
 rule freebayes_var:
     input: 
@@ -120,3 +123,13 @@ rule freebayes_var:
         "Rule {rule} processing"
     shell:
         "module load freebayes samtools vcflib/gcc/64/0.00.2019.07.10 && freebayes -f {input.reference} --use-best-n-alleles 4 --min-base-quality 10 --min-alternate-fraction 0.2 --haplotype-length 0 --ploidy 2 --min-alternate-count 2 --bam {input.bam} | vcffilter -f 'QUAL > 20' | bgzip -c > {output}"
+
+rule index_vcf:
+    input:
+        rules.freebayes_var.output
+    output:
+         "variant_calling/var.vcf.gz.tbi"
+    message:
+        "Rule {rule} processing"
+    shell:
+        "module load bcftools && tabix -p vcf {input}"
