@@ -1,28 +1,20 @@
 configfile: "config.yaml"
 import os
 
-# wdir=os.getcwd()
+include: "/lustre/nobackup/WUR/ABGC/moiti001/snakemake-rules/create_file_log.smk"
+
+pipeline = "mapping-var-calling"
+
 # Sets the working directory to the directory where you want to save the results (set in the config file)
 workdir: config["OUTDIR"]
 
-## problem - if I remove the "subset" from {sample}.subset.fastq.gz, then both the subset and the others are going to be used ({sample}.subset.fastq.gz here in the next lines and also on the bwa_map rule) 
-#- can instead have each read defined individually in the config file (FWD=PATH and REV=PATH)
-
-# Get all reads that are in this dir
-# reads, = glob_wildcards(os.path.join( config["READS_DIR"], "{sample}.subset.fastq.gz")) ### FOR SUBSET uncomment this line and comment out the next
 reads, = glob_wildcards(os.path.join(config["READS_DIR"], "{sample}001.fastq.gz"))
 
 ASSEMBLY=config["assembly"]
 
-# Resources that can be set individually in each rule:
-    # resources:
-        # time_min=XXX (default 180),
-        # cpus=XXX (default 16),
-        # mem_mb=XXX (default 16000)
-
-
 rule all:
     input:
+        files_log,
         "variant_calling/var.vcf.gz.tbi", 
         "results/qualimap/genome_results.txt"
 
