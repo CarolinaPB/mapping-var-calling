@@ -8,9 +8,16 @@ pipeline = "mapping-var-calling"
 # Sets the working directory to the directory where you want to save the results (set in the config file)
 workdir: config["OUTDIR"]
 
-reads, = glob_wildcards(os.path.join(config["READS_DIR"], "{sample}001.fastq.gz"))
+ASSEMBLY=config["ASSEMBLY"]
+READS = config["READS_DIR"]
+PREFIX = config["my_prefix"]
 
-ASSEMBLY=config["assembly"]
+
+
+# reads, = glob_wildcards(os.path.join(READS, "{sample}001.fastq.gz"))
+reads, = glob_wildcards(os.path.join(READS, "{sample}.fq.gz"))
+
+
 
 rule all:
     input:
@@ -18,30 +25,28 @@ rule all:
         "variant_calling/var.vcf.gz.tbi", 
         "results/qualimap/genome_results.txt"
 
-# localrules: move_qualimap_res
+localrules: create_file_log
 
 
-# run bwa index if the index files don't exist
-if not os.path.isfile(os.path.join(ASSEMBLY+".amb")):
-    rule bwa_index:
-        input: 
-            ASSEMBLY
-        output:
-            os.path.join(ASSEMBLY+".amb")
-        group:
-            "group_all"
-        shell:
-            "module load bwa && bwa index {input}"
+rule bwa_index:
+    input: 
+        ASSEMBLY
+    output:
+        multiext(ASSEMBLY, ".amb", ".ann", ".bwt", ".pac", ".sa")
+    group:
+        "group_all"
+    shell:
+        "module load bwa && bwa index {input}"
 
 rule bwa_map:
-    # Index, align reads and remove duplicates
     input:
         assembly = ASSEMBLY,
-        idx = os.path.join(ASSEMBLY+".amb"),
-        # reads=expand(os.path.join(config["READS_DIR"], "{sample}.subset.fastq.gz"), sample=reads) ### FOR SUBSET uncomment this line and comment out the next
-        reads=expand(os.path.join(config["READS_DIR"], "{sample}001.fastq.gz"), sample=reads)
+        idx = rules.bwa_index.output,
+        # reads=expand(os.path.join(READS, "{sample}.subset.fastq.gz"), sample=reads) ### FOR SUBSET uncomment this line and comment out the next
+        # reads=expand(os.path.join(READS, "{sample}001.fastq.gz"), sample=reads)
+        reads=expand(os.path.join(READS, "{sample}.fq.gz"), sample=reads)
     output:
-        temp(os.path.join("mapped_reads/", config["my_prefix"]+".bam"))
+        temp(os.path.join("mapped_reads/", PREFIX+".bam"))
     resources: 
         cpus=16
     group:
@@ -55,7 +60,7 @@ rule samtools_sort:
     input: 
         rules.bwa_map.output
     output: 
-        os.path.join("sorted_reads/", config["my_prefix"] +".sort.bam")
+        os.path.join("sorted_reads/", PREFIX +".sort.bam")
     resources:
         cpus=7
     group:
@@ -69,7 +74,7 @@ rule samtools_index:
     input:
         rules.samtools_sort.output
     output:
-        os.path.join("sorted_reads/", config["my_prefix"] +".sort.bam.bai")
+        os.path.join("sorted_reads/", PREFIX +".sort.bam.bai")
     resources:
         cpus=16
     group:
@@ -84,13 +89,7 @@ rule qualimap_report:
         check=rules.samtools_index.output, # not used in the command, but it's here so snakemake knows to run the rule after the indexing
         bam=rules.samtools_sort.output
     output: 
-        # outdir=directory("results/qualimap/"),
         outfile="results/qualimap/genome_results.txt"
-        # temp(os.path.join(wdir, "sorted_reads/", config["my_prefix"] +".sort_stats", "report.pdf"))
-    # resources:
-    #     time_min=10,
-    #     cpus=1,
-    #     mem_mb=2000
     params:
         outdir = "results/qualimap/"
     group:
@@ -123,5 +122,7 @@ rule index_vcf:
          "variant_calling/var.vcf.gz.tbi"
     message:
         "Rule {rule} processing"
+    group:
+        'group_all'
     shell:
         "module load bcftools && tabix -p vcf {input}"
